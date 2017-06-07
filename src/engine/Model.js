@@ -1,37 +1,58 @@
 import { mat4 } from 'gl-matrix';
+import Mesh from './Mesh';
 
 export default class Model {
 
-    constructor(engine, vertices) {
+    constructor(engine, meshInfo, textures) {
         this.e   = engine;
-        const gl = engine.gl;
+
+        this.position = {
+            x: 0,
+            y: 0,
+            z: 0,
+        };
+
+        this.rotation = {
+            x: 0,
+            y: 0,
+            z: 0,
+        };
 
         this._mPos = mat4.create();
-        this._rotateY = 0;
 
-        this._buffer = gl.createBuffer();
+        this._mesh = new Mesh(engine, meshInfo);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this._buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-        this._verticesCount = vertices.length / 3;
+        this._textures = textures;
     }
 
     draw(shader) {
-        const gl = this.e.gl;
+        const p = this.position;
+        const r = this.rotation;
+        const m = this._mPos;
 
-        mat4.identity(this._mPos);
-        mat4.translate(this._mPos, this._mPos, [-1.5, 0, -7]);
-        mat4.rotateY(this._mPos, this._mPos, this._rotateY);
+        mat4.identity(m);
+        mat4.translate(m, m, [p.x, p.y, p.z]);
 
-        shader.setUniform('umModel', this._mPos);
-        shader.setAttribute('aPos', this._buffer);
+        if (r.x) {
+            mat4.rotateX(m, m, r.x);
+        }
 
-        gl.drawArrays(gl.TRIANGLES, 0, this._verticesCount);
-    }
+        if (r.y) {
+            mat4.rotateY(m, m, r.y);
+        }
 
-    rotateY(angle) {
-        this._rotateY += angle;
+        if (r.z) {
+            mat4.rotateZ(m, m, r.z);
+        }
+
+        shader.setUniform('umModel', m);
+
+        this._mesh.applyBuffers(shader);
+
+        for (let group of this._mesh.groups) {
+            this._textures[group.material].activate(shader);
+            this._mesh.draw(group.id);
+        }
     }
 
 }

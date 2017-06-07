@@ -1,0 +1,46 @@
+
+const textures = new Map();
+
+export default class Texture {
+
+    static loadTexture(engine, fileName) {
+        return new Promise((resolve, reject) => {
+            const image = new Image();
+
+            image.addEventListener('load', () => {
+                resolve(new Texture(engine, image));
+            });
+
+            image.addEventListener('error', () => {
+                reject(new Error(`Loading texture ${fileName} failed`));
+            });
+
+            image.src = `textures/${fileName}`;
+        });
+    }
+
+    constructor(engine, textureImage) {
+        this.e = engine;
+        const gl = this.e.gl;
+
+        this._texture = gl.createTexture();
+
+        gl.bindTexture(gl.TEXTURE_2D, this._texture);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImage);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.generateMipmap(gl.TEXTURE_2D);
+
+        gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+
+    activate(shader) {
+        const gl = this.e.gl;
+
+        gl.bindTexture(gl.TEXTURE_2D, this._texture);
+        gl.activeTexture(gl.TEXTURE0);
+        shader.setUniform('uSampler', 0);
+    }
+
+}

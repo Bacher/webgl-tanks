@@ -4,8 +4,8 @@ export default class Shader {
     constructor(engine, vertexShaderText, fragmentShaderText) {
         this.e = engine;
 
-        this._vst = vertexShaderText;
-        this._fst = fragmentShaderText;
+        this._vst = vertexShaderText.replace(/\/\/.+\n/g, '\n');
+        this._fst = fragmentShaderText.replace(/\/\/.+\n/g, '\n');
 
         this._program   = null;
         this.uniforms   = {};
@@ -30,49 +30,53 @@ export default class Shader {
 
         gl.useProgram(program);
 
-        const uniformRx    = /uniform\s+([^ ]+)\s+([^\s;]+)/g;
-        const attributesRx = /attribute\s+[^ ]+\s+([^\s;]+)/g;
-        let match;
+        for (let shaderText of [this._vst, this._fst]) {
+            const uniformRx    = /uniform\s+([^ ]+)\s+([^\s;]+)/g;
+            const attributesRx = /attribute\s+([^ ]+)\s+([^\s;]+)/g;
 
-        while (true) {
-            match = uniformRx.exec(this._vst);
+            let match;
 
-            if (!match) {
-                break;
+            while (true) {
+                match = uniformRx.exec(shaderText);
+
+                if (!match) {
+                    break;
+                }
+
+                const [, type, name] = match;
+
+                const location = gl.getUniformLocation(program, name);
+
+                if (location == null) {
+                    throw new Error(`Bad uniform location [${name}]`);
+                }
+
+                this.uniforms[name] = {
+                    location,
+                    type,
+                };
             }
 
-            const [, type, name] = match;
+            while (true) {
+                match = attributesRx.exec(shaderText);
 
-            const location = gl.getUniformLocation(program, name);
+                if (!match) {
+                    break;
+                }
 
-            if (location == null) {
-                throw new Error(`Bad uniform location [${name}]`);
+                const [, type, name] = match;
+
+                const location = gl.getAttribLocation(program, name);
+
+                if (location == null) {
+                    throw new Error(`Bad attribute location [${name}]`);
+                }
+
+                this.attributes[name] = {
+                    location,
+                    type,
+                };
             }
-
-            this.uniforms[name] = {
-                location,
-                type,
-            };
-        }
-
-        while (true) {
-            match = attributesRx.exec(this._vst);
-
-            if (!match) {
-                break;
-            }
-
-            const name = match[1];
-
-            const location = gl.getAttribLocation(program, name);
-
-            if (location == null) {
-                throw new Error(`Bad attribute location [${name}]`);
-            }
-
-            this.attributes[name] = {
-                location,
-            };
         }
     }
 
@@ -112,8 +116,11 @@ export default class Shader {
             case 'mat4':
                 gl.uniformMatrix4fv(location, false, value);
                 break;
+            case 'sampler2D':
+                gl.uniform1i(location, value);
+                break;
             default:
-                throw new Error('Unknown uniform type');
+                throw new Error(`Unknown uniform type [${uniform.type}]`);
         }
     }
 
@@ -126,8 +133,27 @@ export default class Shader {
             throw new Error(`Attribute [${name}] not found`);
         }
 
+        let itemSize;
+
+        switch (attribute.type) {
+            case 'vec1':
+                itemSize = 1;
+                break;
+            case 'vec2':
+                itemSize = 2;
+                break;
+            case 'vec3':
+                itemSize = 3;
+                break;
+            case 'vec4':
+                itemSize = 4;
+                break;
+            default:
+                throw new Error(`Unknown attribute type [${attribute.type}]`);
+        }
+
         gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.vertexAttribPointer(attribute.location, 3, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(attribute.location, itemSize, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(attribute.location);
     }
 

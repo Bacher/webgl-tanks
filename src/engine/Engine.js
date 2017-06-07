@@ -1,9 +1,12 @@
 import { mat3, mat4 } from 'gl-matrix';
 import _ from 'lodash';
 import Shader from './Shader';
+import Model from './Model';
+import Texture from './Texture';
 import Camera from './Camera';
 import Controller from './Controller';
 import * as BasicShader from './shaders/basic'
+import * as TexturedShader from './shaders/textured'
 
 const PId2 = Math.PI / 2;
 
@@ -44,6 +47,9 @@ export default class Engine {
     _initShaderPrograms() {
         this._shaders.basic = new Shader(this, BasicShader.v, BasicShader.f);
         this._shaders.basic.compile();
+
+        this._shaders.textured = new Shader(this, TexturedShader.v, TexturedShader.f);
+        this._shaders.textured.compile();
     }
 
     _addInputListeners() {
@@ -95,7 +101,8 @@ export default class Engine {
         gl.viewport(0, 0, this._width, this._height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        const shader = this._shaders.basic;
+        const shader = this._shaders.textured;
+        shader.use();
 
         this._camera.applyMovement(this._controller);
 
@@ -122,4 +129,35 @@ function normalizeAngle(rotation, dimension) {
     } else if (angle >= PI2) {
         rotation[dimension] = angle % PI2;
     }
+}
+
+export function loadModel(engine, { model }) {
+    const url = `models/${model}.json`;
+
+    return fetch(url).then(res => {
+        if (!res.ok) {
+            console.error(`Model loading [${url}] failed`);
+            throw new Error('Model loading error');
+        }
+
+        return res.json().then(data => {
+            data.vertices = new Float32Array(data.vertices);
+            data.uvs      = new Float32Array(data.uvs);
+            data.normals  = new Float32Array(data.normals);
+            data.polygons = new Uint16Array(data.polygons);
+
+            const textures = {};
+            const waits = [];
+
+            for (let group of data.groups) {
+                waits.push(Texture.loadTexture(engine, `${model}__${group.material}.jpg`).then(texture => {
+                    textures[group.material] = texture;
+                }))
+            }
+
+            return Promise.all(waits).then(() => {
+                return new Model(engine, data, textures);
+            });
+        });
+    });
 }
