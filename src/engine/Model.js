@@ -4,7 +4,9 @@ import Mesh from './Mesh';
 export default class Model {
 
     constructor(engine, meshInfo, textures) {
-        this.e   = engine;
+        this.e = engine;
+
+        this._boundSphere = meshInfo.boundSphere;
 
         this.position = {
             x: 0,

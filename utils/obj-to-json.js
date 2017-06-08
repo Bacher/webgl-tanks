@@ -13,6 +13,11 @@ function parseObj(objText) {
     const groups = [];
     let currentGroup = null;
 
+    const boundBox = {
+        min: [999, 999, 999],
+        max: [-999, -999, -999],
+    };
+
     for (let rawLine of lines) {
         const line = rawLine.replace(/#.*$/, '').trim();
 
@@ -39,7 +44,17 @@ function parseObj(objText) {
                 currentGroup.material = rest.trim().toLowerCase().replace(/[^\w\d]/g, '_');
                 break;
             case 'v':
-                vertices.push(...rest.split(' ').map(Number));
+                const [x, y, z] = rest.split(' ').map(Number);
+
+                if (boundBox.min[0] > x) boundBox.min[0] = x;
+                if (boundBox.min[1] > x) boundBox.min[1] = y;
+                if (boundBox.min[2] > x) boundBox.min[2] = z;
+
+                if (boundBox.max[0] < x) boundBox.max[0] = x;
+                if (boundBox.max[1] < x) boundBox.max[1] = y;
+                if (boundBox.max[2] < x) boundBox.max[2] = z;
+
+                vertices.push(x, y, z);
                 break;
             case 'vt':
                 const [u, v] = rest.split(' ').map(Number);
@@ -89,12 +104,29 @@ function parseObj(objText) {
         }
     }
 
+    const size = [
+        boundBox.max[0] - boundBox.min[0],
+        boundBox.max[1] - boundBox.min[1],
+        boundBox.max[2] - boundBox.min[2],
+    ];
+
+    const boundSphere = {
+        center: [
+            boundBox.min[0] + size[0] / 2,
+            boundBox.min[1] + size[1] / 2,
+            boundBox.min[2] + size[2] / 2,
+        ],
+        radius: Math.max(...size) / 2,
+    };
+
     return {
         vertices,
         uvs,
         normals,
         polygons: newPolygons,
         groups,
+        boundBox,
+        boundSphere,
     };
 }
 
@@ -111,4 +143,8 @@ const data = fs.readFileSync(process.argv[process.argv.length - 1], 'utf-8');
 
 const model = parseObj(data);
 
-process.stdout.write(JSON.stringify(model));
+const json = JSON.stringify(model);
+
+const rounded = json.replace(/\d\.\d{7,}/g, match => Number(match).toFixed(6));
+
+process.stdout.write(rounded);

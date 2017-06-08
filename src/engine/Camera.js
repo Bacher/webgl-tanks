@@ -4,13 +4,13 @@ const PId2 = Math.PI / 2;
 
 export default class Camera {
 
-    constructor(engine, aspectRatio) {
+    constructor(engine) {
         this.e = engine;
 
         this._forward = 0;
         this._right   = 0;
 
-        this._aspectRatio = aspectRatio;
+        this.aspectRatio = 1;
 
         this.position = {
             x: 0,
@@ -28,11 +28,13 @@ export default class Camera {
     }
 
     getMatrix() {
+        const pos = this.position;
+
         mat4.identity(this._mat);
-        mat4.perspective(this._mat, 45, this._aspectRatio, 0.1, 100);
+        mat4.perspective(this._mat, 45, this.aspectRatio, 0.1, 100);
         mat4.rotateX(this._mat, this._mat, this.rotation.x);
         mat4.rotateY(this._mat, this._mat, this.rotation.y);
-        mat4.translate(this._mat, this._mat, [this.position.x, this.position.y, this.position.z]);
+        mat4.translate(this._mat, this._mat, [pos.x, pos.y, pos.z]);
 
         return this._mat;
     }

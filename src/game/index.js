@@ -1,8 +1,11 @@
 import Engine, { loadModel } from '../engine/Engine';
+import Camera from '../engine/Camera';
 import Model from '../engine/Model';
 
 const game = new Engine(document.getElementById('game-view'));
-//const camera = game.getDefaultCamera();
+const camera = new Camera(game);
+
+game.setCamera(camera);
 
 let frame = 0;
 

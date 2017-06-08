@@ -1,4 +1,4 @@
-import { mat3, mat4 } from 'gl-matrix';
+import { vec3, vec4, mat3, mat4 } from 'gl-matrix';
 import _ from 'lodash';
 import Shader from './Shader';
 import Model from './Model';
@@ -10,6 +10,8 @@ import * as TexturedShader from './shaders/textured'
 
 const PId2 = Math.PI / 2;
 
+window.vec3 = vec3;
+window.vec4 = vec4;
 window.mat3 = mat3;
 window.mat4 = mat4;
 
@@ -36,7 +38,6 @@ export default class Engine {
         this._shaders = {};
         this._sceneModels = [];
 
-        this._camera = new Camera(this, this._ratio);
         this._controller = new Controller(this);
 
         this._initShaderPrograms();
@@ -87,6 +88,11 @@ export default class Engine {
 
     addModel(model) {
         this._sceneModels.push(model);
+    }
+
+    setCamera(camera) {
+        this._camera = camera;
+        this._camera.aspectRatio = this._ratio;
     }
 
     draw() {
@@ -152,7 +158,7 @@ export function loadModel(engine, { model }) {
             for (let group of data.groups) {
                 waits.push(Texture.loadTexture(engine, `${model}__${group.material}.jpg`).then(texture => {
                     textures[group.material] = texture;
-                }))
+                }));
             }
 
             return Promise.all(waits).then(() => {
