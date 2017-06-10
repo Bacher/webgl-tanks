@@ -8,6 +8,7 @@ import Controller from './Controller';
 import * as BasicShader from './shaders/basic';
 import * as TexturedShader from './shaders/textured';
 import * as PlainTexturedShader from './shaders/plain-textured';
+import * as SkyBoxShader from './shaders/skybox';
 
 const PId2 = Math.PI / 2;
 
@@ -56,6 +57,9 @@ export default class Engine {
 
         this._shaders.plainTextured = new Shader(this, PlainTexturedShader.v, PlainTexturedShader.f);
         this._shaders.plainTextured.compile();
+
+        this._shaders.skybox = new Shader(this, SkyBoxShader.v, SkyBoxShader.f);
+        this._shaders.skybox.compile();
     }
 
     _addInputListeners() {
@@ -91,6 +95,10 @@ export default class Engine {
         return document.pointerLockElement === this._canvas;
     }
 
+    setSkyBox(skyBox) {
+        this._skyBox = skyBox;
+    }
+
     addModel(model) {
         this._sceneModels.push(model);
     }
@@ -115,6 +123,13 @@ export default class Engine {
 
         gl.viewport(0, 0, this._width, this._height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+        if (this._skyBox) {
+            const shader = this._shaders['skybox'];
+            shader.use();
+            shader.setUniform('umCamera', this._camera.getSkyBoxMatrix());
+            this._skyBox.draw(shader);
+        }
 
         const mCamera = this._camera.getMatrix();
 
@@ -157,7 +172,7 @@ function normalizeAngle(rotation, dimension) {
     }
 }
 
-export function loadModel(engine, { model }) {
+export function loadModel(engine, { model, alphaTextures }) {
     const url = `models/${model}.json`;
 
     return fetch(url).then(res => {
@@ -176,8 +191,13 @@ export function loadModel(engine, { model }) {
             const waits = [];
 
             for (let group of data.groups) {
-                waits.push(Texture.loadTexture(engine, `${model}__${group.material}.jpg`).then(texture => {
-                    textures[group.material] = texture;
+                const material  = group.material || group.id;
+                const isAlphaTexture = alphaTextures && alphaTextures.includes(material);
+                const extension      = isAlphaTexture ? 'png' : 'jpg';
+                const fileName       = `${model}__${material}.${extension}`;
+
+                waits.push(Texture.loadTexture(engine, fileName, isAlphaTexture).then(texture => {
+                    textures[material] = texture;
                 }));
             }
 

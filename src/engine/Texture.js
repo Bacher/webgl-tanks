@@ -3,12 +3,12 @@ const textures = new Map();
 
 export default class Texture {
 
-    static loadTexture(engine, fileName) {
+    static loadTexture(engine, fileName, isAlpha) {
         return new Promise((resolve, reject) => {
             const image = new Image();
 
             image.addEventListener('load', () => {
-                resolve(new Texture(engine, image));
+                resolve(new Texture(engine, image, isAlpha));
             });
 
             image.addEventListener('error', () => {
@@ -19,9 +19,11 @@ export default class Texture {
         });
     }
 
-    constructor(engine, textureImage) {
+    constructor(engine, textureImage, isAlpha) {
         this.e = engine;
         const gl = this.e.gl;
+
+        this.isAlpha = Boolean(isAlpha);
 
         this._texture = gl.createTexture();
 

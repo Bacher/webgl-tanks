@@ -41,6 +41,8 @@ export default class PlainMesh {
             gl.bindBuffer(gl.ARRAY_BUFFER, buffers.uvs);
             gl.bufferData(gl.ARRAY_BUFFER, uvs, gl.STATIC_DRAW);
         }
+
+        this.rotation = { x: 0, y: 0, z: 0 };
     }
 
     applyBuffers(shader) {

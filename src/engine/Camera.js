@@ -31,10 +31,22 @@ export default class Camera {
         const pos = this.position;
 
         mat4.identity(this._mat);
-        mat4.perspective(this._mat, 45, this.aspectRatio, 0.1, 100);
+        mat4.perspective(this._mat, 45, this.aspectRatio, 0.1, 200);
         mat4.rotateX(this._mat, this._mat, -this.rotation.x);
         mat4.rotateY(this._mat, this._mat, -this.rotation.y);
         mat4.translate(this._mat, this._mat, [-pos.x, -pos.y, -pos.z]);
+
+        return this._mat;
+    }
+
+    getSkyBoxMatrix() {
+        const pos = this.position;
+
+        mat4.identity(this._mat);
+        mat4.perspective(this._mat, 45, this.aspectRatio, 0.1, 1000);
+        mat4.rotateX(this._mat, this._mat, -this.rotation.x);
+        mat4.rotateY(this._mat, this._mat, -this.rotation.y);
+        mat4.translate(this._mat, this._mat, [-pos.x / 10, -pos.y / 10, -pos.z / 10]);
 
         return this._mat;
     }

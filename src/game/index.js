@@ -2,6 +2,7 @@ import Engine, { loadModel } from '../engine/Engine';
 import Camera from '../engine/Camera';
 import Texture from '../engine/Texture';
 import Plain from '../engine/Plain';
+import SkyBox from '../engine/SkyBox';
 
 const game = new Engine(document.getElementById('game-view'));
 const camera = new Camera(game);
@@ -10,18 +11,29 @@ camera.position.y = 1.7;
 
 game.setCamera(camera);
 
-let frame = 0;
-
-loadModel(game, {
-    model: 'tank',
-}).then(tank => {
+Promise.all([
+    loadModel(game, {
+        model: 'tank',
+    }),
+    loadModel(game, {
+        model: 'oak',
+        alphaTextures: ['blaetter'],
+    }),
+    SkyBox.loadSkyBox(game, 'skybox.jpg')
+]).then(([tank, oak, skyBox]) => {
     tank.position = {
         x: 0,
         y: -tank.boundBox.min[1],
         z: -7,
     };
 
+    game.setSkyBox(skyBox);
+
     game.addModel(tank);
+
+    oak.setScale(0.1);
+    oak.position.z = 10;
+    game.addModel(oak);
 
     game.startDrawCycle();
 

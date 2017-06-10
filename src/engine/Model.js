@@ -11,6 +11,20 @@ export default class Model {
         const bb = this.boundBox = meshInfo.boundBox;
         this.boundSphere = meshInfo.boundSphere;
 
+        this.position = {
+            x: 0,
+            y: 0,
+            z: 0,
+        };
+
+        this.rotation = {
+            x: 0,
+            y: 0,
+            z: 0,
+        };
+
+        this.scale = [1, 1, 1];
+
         const { min, max } = bb;
 
         this._boundBoxPoints = [
@@ -35,18 +49,6 @@ export default class Model {
             vec3.create(),
         ];
 
-        this.position = {
-            x: 0,
-            y: 0,
-            z: 0,
-        };
-
-        this.rotation = {
-            x: 0,
-            y: 0,
-            z: 0,
-        };
-
         this._mPos = mat4.create();
 
         this._mesh = new Mesh(engine, meshInfo);
@@ -55,12 +57,17 @@ export default class Model {
     }
 
     draw(shader, mCamera) {
+        const gl = this.e.gl;
+
         const p = this.position;
         const r = this.rotation;
+        const s = this.scale;
         const m = this._mPos;
 
         mat4.identity(m);
         mat4.translate(m, m, [p.x, p.y, p.z]);
+
+        mat4.scale(m, m, s);
 
         if (r.x) {
             mat4.rotateX(m, m, r.x);
@@ -83,9 +90,24 @@ export default class Model {
         this._mesh.applyBuffers(shader);
 
         for (let group of this._mesh.groups) {
-            this._textures[group.material].activate(shader);
+            const texture = this._textures[group.material || group.id];
+
+            if (texture.isAlpha) {
+                gl.enable(gl.BLEND);
+                gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+            }
+
+            texture.activate(shader);
             this._mesh.draw(group.id);
+
+            if (texture.isAlpha) {
+                gl.disable(gl.BLEND);
+            }
         }
+    }
+
+    setScale(modifier) {
+        this.scale = [modifier, modifier, modifier];
     }
 
     _checkVisibility(mCamera, mModel) {
