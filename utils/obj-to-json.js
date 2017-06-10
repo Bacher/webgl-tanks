@@ -47,12 +47,12 @@ function parseObj(objText) {
                 const [x, y, z] = rest.split(' ').map(Number);
 
                 if (boundBox.min[0] > x) boundBox.min[0] = x;
-                if (boundBox.min[1] > x) boundBox.min[1] = y;
-                if (boundBox.min[2] > x) boundBox.min[2] = z;
+                if (boundBox.min[1] > y) boundBox.min[1] = y;
+                if (boundBox.min[2] > z) boundBox.min[2] = z;
 
                 if (boundBox.max[0] < x) boundBox.max[0] = x;
-                if (boundBox.max[1] < x) boundBox.max[1] = y;
-                if (boundBox.max[2] < x) boundBox.max[2] = z;
+                if (boundBox.max[1] < y) boundBox.max[1] = y;
+                if (boundBox.max[2] < z) boundBox.max[2] = z;
 
                 vertices.push(x, y, z);
                 break;

@@ -5,8 +5,9 @@ import Model from './Model';
 import Texture from './Texture';
 import Camera from './Camera';
 import Controller from './Controller';
-import * as BasicShader from './shaders/basic'
-import * as TexturedShader from './shaders/textured'
+import * as BasicShader from './shaders/basic';
+import * as TexturedShader from './shaders/textured';
+import * as PlainTexturedShader from './shaders/plain-textured';
 
 const PId2 = Math.PI / 2;
 
@@ -19,6 +20,7 @@ export default class Engine {
 
     constructor(canvas) {
         _.bindAll(this, [
+            '_frame',
             '_onMouseMove',
         ]);
 
@@ -33,7 +35,7 @@ export default class Engine {
         this._canvas.width  = this._width;
         this._canvas.height = this._height;
 
-        this.gl = canvas.getContext('webgl');
+        window.gl = this.gl = canvas.getContext('webgl');
 
         this._shaders = {};
         this._sceneModels = [];
@@ -51,6 +53,9 @@ export default class Engine {
 
         this._shaders.textured = new Shader(this, TexturedShader.v, TexturedShader.f);
         this._shaders.textured.compile();
+
+        this._shaders.plainTextured = new Shader(this, PlainTexturedShader.v, PlainTexturedShader.f);
+        this._shaders.plainTextured.compile();
     }
 
     _addInputListeners() {
@@ -68,8 +73,8 @@ export default class Engine {
     _onMouseMove(e) {
         if (this.isActive()) {
             const rotation = this._camera.rotation;
-            rotation.y += (e.movementX * 0.003);
-            rotation.x += (e.movementY * 0.003);
+            rotation.y -= (e.movementX * 0.003);
+            rotation.x -= (e.movementY * 0.003);
 
             if (rotation.x > PId2) {
                 rotation.x = PId2;
@@ -95,7 +100,11 @@ export default class Engine {
         this._camera.aspectRatio = this._ratio;
     }
 
-    draw() {
+    _logicTick(delta) {
+        this._camera.applyMovement(this._controller, delta);
+    }
+
+    _draw() {
         const gl = this.gl;
 
         if (this._firstDraw) {
@@ -107,20 +116,31 @@ export default class Engine {
         gl.viewport(0, 0, this._width, this._height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        const shader = this._shaders.textured;
-        shader.use();
-
-        this._camera.applyMovement(this._controller);
-
-        shader.setUniform('umCamera', this._camera.getMatrix());
+        const mCamera = this._camera.getMatrix();
 
         for (let model of this._sceneModels) {
-            model.draw(shader);
+            const shader = this._shaders[model.shader];
+            shader.use();
+            shader.setUniform('umCamera', mCamera);
+
+            model.draw(shader, mCamera);
         }
     }
 
     getDefaultCamera() {
         return this._camera;
+    }
+
+    startDrawCycle() {
+        this._frame();
+    }
+
+    _frame(now) {
+        this._logicTick(this._lastTickTs ? now - this._lastTickTs : 0);
+        this._lastTickTs = now;
+        this._draw();
+
+        requestAnimationFrame(this._frame);
     }
 
 }

@@ -107,12 +107,16 @@ export default class Shader {
         const uniform = this.uniforms[name];
 
         if (!uniform) {
-            throw new Error(`Uniform [${name}] not found in shader`);
+            //throw new Error(`Uniform [${name}] not found in shader`);
+            return;
         }
 
         const location = uniform.location;
 
         switch (uniform.type) {
+            case 'vec2':
+                gl.uniform2fv(location, value);
+                break;
             case 'mat4':
                 gl.uniformMatrix4fv(location, false, value);
                 break;

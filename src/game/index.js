@@ -1,9 +1,12 @@
 import Engine, { loadModel } from '../engine/Engine';
 import Camera from '../engine/Camera';
-import Model from '../engine/Model';
+import Texture from '../engine/Texture';
+import Plain from '../engine/Plain';
 
 const game = new Engine(document.getElementById('game-view'));
 const camera = new Camera(game);
+
+camera.position.y = 1.7;
 
 game.setCamera(camera);
 
@@ -14,22 +17,22 @@ loadModel(game, {
 }).then(tank => {
     tank.position = {
         x: 0,
-        y: -1,
+        y: -tank.boundBox.min[1],
         z: -7,
     };
 
     game.addModel(tank);
 
-    const intervalId = setInterval(() => {
-        tank.rotation.y += 0.2;
+    game.startDrawCycle();
 
-        frame++;
-        game.draw();
+    Texture.loadTexture(game, 'grass.jpg').then(texture => {
+        const plain = new Plain(game, texture, {
+            repeat: [16, 16],
+            size:   [128, 128],
+        });
 
-        if (frame === 1000) {
-            clearInterval(intervalId);
-        }
-    }, 200);
+        game.addModel(plain);
+    });
 });
 
 // const triangle = new Model(game, new Float32Array([
@@ -37,5 +40,3 @@ loadModel(game, {
 //     -1, -1, 0,
 //     1, -1, 0,
 // ]));
-
-

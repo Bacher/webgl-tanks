@@ -3,9 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <title>The Tanks Game</title>
-    <style>body{margin:0}</style>
+    <style>
+        body {
+            margin: 0;
+            background: lightgray;
+        }
+        #bulb {
+            position: absolute;
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            z-index: 10;
+        }
+    </style>
 </head>
 <body>
+    <div id="bulb"></div>
     <div class="game">
         <canvas id="game-view"></canvas>
     </div>
