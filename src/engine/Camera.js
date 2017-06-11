@@ -51,23 +51,26 @@ export default class Camera {
         return this._mat;
     }
 
-    applyMovement(controller, delta) {
+    applyMovement(delta) {
+        return;
+        const keyboard = this.e.keyboard;
+
         this._forward = 0;
         this._right   = 0;
 
-        if (controller.keys.has('w')) {
+        if (keyboard.keys.has('w')) {
             this._forward += 1;
         }
 
-        if (controller.keys.has('s')) {
+        if (keyboard.keys.has('s')) {
             this._forward -= 1;
         }
 
-        if (controller.keys.has('a')) {
+        if (keyboard.keys.has('a')) {
             this._right -= 1;
         }
 
-        if (controller.keys.has('d')) {
+        if (keyboard.keys.has('d')) {
             this._right += 1;
         }
 

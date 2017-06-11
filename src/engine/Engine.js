@@ -4,7 +4,7 @@ import Shader from './Shader';
 import Model from './Model';
 import Texture from './Texture';
 import Camera from './Camera';
-import Controller from './Controller';
+import Keyboard from './Keyboard';
 import * as BasicShader from './shaders/basic';
 import * as TexturedShader from './shaders/textured';
 import * as PlainTexturedShader from './shaders/plain-textured';
@@ -40,8 +40,9 @@ export default class Engine {
 
         this._shaders = {};
         this._sceneModels = [];
+        this._controllers = [];
 
-        this._controller = new Controller(this);
+        this.keyboard = new Keyboard(this);
 
         this._initShaderPrograms();
 
@@ -71,7 +72,7 @@ export default class Engine {
 
         this._canvas.addEventListener('mousemove', this._onMouseMove);
 
-        this._controller.addInputListeners();
+        this.keyboard.addInputListeners();
     }
 
     _onMouseMove(e) {
@@ -103,13 +104,23 @@ export default class Engine {
         this._sceneModels.push(model);
     }
 
+    addController(controller) {
+        if (this._controllers.indexOf(controller) === -1) {
+            this._controllers.push(controller);
+        }
+    }
+
     setCamera(camera) {
         this._camera = camera;
         this._camera.aspectRatio = this._ratio;
     }
 
     _logicTick(delta) {
-        this._camera.applyMovement(this._controller, delta);
+        this._camera.applyMovement(delta);
+
+        for (let controller of this._controllers) {
+            controller.logicTick(delta);
+        }
     }
 
     _draw() {

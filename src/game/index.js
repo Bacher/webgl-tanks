@@ -3,6 +3,7 @@ import Camera from '../engine/Camera';
 import Texture from '../engine/Texture';
 import Plain from '../engine/Plain';
 import SkyBox from '../engine/SkyBox';
+import CarController from '../engine/CarController';
 
 const game = new Engine(document.getElementById('game-view'));
 const camera = new Camera(game);
@@ -21,15 +22,23 @@ Promise.all([
     }),
     SkyBox.loadSkyBox(game, 'skybox.jpg')
 ]).then(([tank, oak, skyBox]) => {
+    game.keyboard.on('keydown', key => {
+        if (key === 'q') {
+            console.log('QQ');
+        }
+    });
+
     tank.position = {
         x: 0,
         y: -tank.boundBox.min[1],
         z: -7,
     };
+    game.addModel(tank);
+
+    const cc = new CarController(game, tank);
+    game.addController(cc);
 
     game.setSkyBox(skyBox);
-
-    game.addModel(tank);
 
     oak.setScale(0.1);
     oak.position.z = 10;
