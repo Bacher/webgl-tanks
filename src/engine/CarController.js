@@ -99,8 +99,6 @@ export default class CarController {
                 speedChange *= (MAX_SELF_SPEED - this._speed) / MAX_SELF_SPEED;
             }
 
-            console.log('speedChange', speedChange);
-
             this._speed += speedChange;
         }
 
@@ -116,6 +114,10 @@ export default class CarController {
 
         model.position   = this._position;
         model.rotation.y = this._direction;
+
+        this.e.camera.position.x = this._position.x;
+        this.e.camera.position.y = 4;
+        this.e.camera.position.z = this._position.z;
     }
 
 }

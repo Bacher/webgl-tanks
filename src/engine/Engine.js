@@ -41,6 +41,7 @@ export default class Engine {
         this._shaders = {};
         this._sceneModels = [];
         this._controllers = [];
+        this.camera = null;
 
         this.keyboard = new Keyboard(this);
 
@@ -77,7 +78,7 @@ export default class Engine {
 
     _onMouseMove(e) {
         if (this.isActive()) {
-            const rotation = this._camera.rotation;
+            const rotation = this.camera.rotation;
             rotation.y -= (e.movementX * 0.003);
             rotation.x -= (e.movementY * 0.003);
 
@@ -87,8 +88,8 @@ export default class Engine {
                 rotation.x = -PId2;
             }
 
-            // normalizeAngle(this._camera.rotation, 'x');
-            // normalizeAngle(this._camera.rotation, 'y');
+            // normalizeAngle(this.camera.rotation, 'x');
+            // normalizeAngle(this.camera.rotation, 'y');
         }
     }
 
@@ -111,12 +112,12 @@ export default class Engine {
     }
 
     setCamera(camera) {
-        this._camera = camera;
-        this._camera.aspectRatio = this._ratio;
+        this.camera = camera;
+        this.camera.aspectRatio = this._ratio;
     }
 
     _logicTick(delta) {
-        this._camera.applyMovement(delta);
+        this.camera.applyMovement(delta);
 
         for (let controller of this._controllers) {
             controller.logicTick(delta);
@@ -138,11 +139,11 @@ export default class Engine {
         if (this._skyBox) {
             const shader = this._shaders['skybox'];
             shader.use();
-            shader.setUniform('umCamera', this._camera.getSkyBoxMatrix());
+            shader.setUniform('umCamera', this.camera.getSkyBoxMatrix());
             this._skyBox.draw(shader);
         }
 
-        const mCamera = this._camera.getMatrix();
+        const mCamera = this.camera.getMatrix();
 
         for (let model of this._sceneModels) {
             const shader = this._shaders[model.shader];
@@ -151,10 +152,6 @@ export default class Engine {
 
             model.draw(shader, mCamera);
         }
-    }
-
-    getDefaultCamera() {
-        return this._camera;
     }
 
     startDrawCycle() {

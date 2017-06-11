@@ -1,5 +1,6 @@
 import { mat4 } from 'gl-matrix';
 
+const FOV  = Math.PI * 0.45;
 const PId2 = Math.PI / 2;
 
 export default class Camera {
@@ -31,7 +32,8 @@ export default class Camera {
         const pos = this.position;
 
         mat4.identity(this._mat);
-        mat4.perspective(this._mat, 45, this.aspectRatio, 0.1, 200);
+        mat4.perspective(this._mat, FOV, this.aspectRatio, 0.1, 200);
+        mat4.translate(this._mat, this._mat, [0, 0, -5]);
         mat4.rotateX(this._mat, this._mat, -this.rotation.x);
         mat4.rotateY(this._mat, this._mat, -this.rotation.y);
         mat4.translate(this._mat, this._mat, [-pos.x, -pos.y, -pos.z]);
@@ -43,7 +45,7 @@ export default class Camera {
         const pos = this.position;
 
         mat4.identity(this._mat);
-        mat4.perspective(this._mat, 45, this.aspectRatio, 0.1, 1000);
+        mat4.perspective(this._mat, FOV, this.aspectRatio, 0.1, 1000);
         mat4.rotateX(this._mat, this._mat, -this.rotation.x);
         mat4.rotateY(this._mat, this._mat, -this.rotation.y);
         mat4.translate(this._mat, this._mat, [-pos.x / 10, -pos.y / 10, -pos.z / 10]);
