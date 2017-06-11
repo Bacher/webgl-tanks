@@ -85,12 +85,10 @@ export default class Model {
             return;
         }
 
-        shader.setUniform('umModel', m);
-
         this._mesh.applyBuffers(shader);
 
-        for (let group of this._mesh.groups) {
-            const texture = this._textures[group.material || group.id];
+        for (let part of this._mesh.parts) {
+            const texture = this._textures[part.material || part.id];
 
             if (texture.isAlpha) {
                 gl.enable(gl.BLEND);
@@ -98,12 +96,16 @@ export default class Model {
             }
 
             texture.activate(shader);
-            this._mesh.draw(group.id);
+            part.draw(shader, m);
 
             if (texture.isAlpha) {
                 gl.disable(gl.BLEND);
             }
         }
+    }
+
+    getPart(name) {
+        return this._mesh.getPart(name);
     }
 
     setScale(modifier) {

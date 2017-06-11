@@ -5,6 +5,10 @@ import Plain from '../engine/Plain';
 import SkyBox from '../engine/SkyBox';
 import CarController from '../engine/CarController';
 
+const PI2 = Math.PI * 2;
+
+window.normalizeAngle = normalizeAngle;
+
 const game = new Engine(document.getElementById('game-view'));
 const camera = new Camera(game);
 
@@ -28,11 +32,31 @@ Promise.all([
         }
     });
 
+    const turret = tank.getPart('Turret_2');
+
+    game.addLogicHook(delta => {
+        const _delta = delta * 0.0008;
+
+        const needAngle  = camera.rotation.y - tank.rotation.y;
+        const deltaAngle = normalizeAngle(turret.rotation.y - needAngle);
+
+        if (deltaAngle < _delta || deltaAngle > PI2 - _delta) {
+            turret.rotation.y = needAngle
+        } else {
+            if (deltaAngle > Math.PI) {
+                turret.rotation.y += _delta;
+            } else {
+                turret.rotation.y -= _delta;
+            }
+        }
+    });
+
     tank.position = {
         x: 0,
         y: -tank.boundBox.min[1],
         z: -7,
     };
+
     game.addModel(tank);
 
     const cc = new CarController(game, tank);
@@ -61,3 +85,17 @@ Promise.all([
 //     -1, -1, 0,
 //     1, -1, 0,
 // ]));
+
+function normalizeAngle(angle) {
+    let _angle = angle;
+
+    if (_angle < 0) {
+        return _angle - Math.floor(_angle / PI2) * PI2;
+    } else {
+        if (_angle < PI2) {
+            return _angle
+        } else {
+            return _angle % PI2;
+        }
+    }
+}

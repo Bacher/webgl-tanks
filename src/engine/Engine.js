@@ -42,6 +42,7 @@ export default class Engine {
         this._sceneModels = [];
         this._controllers = [];
         this.camera = null;
+        this._logicHooks = [];
 
         this.keyboard = new Keyboard(this);
 
@@ -122,6 +123,10 @@ export default class Engine {
         for (let controller of this._controllers) {
             controller.logicTick(delta);
         }
+
+        for (let func of this._logicHooks) {
+            func(delta);
+        }
     }
 
     _draw() {
@@ -164,6 +169,10 @@ export default class Engine {
         this._draw();
 
         requestAnimationFrame(this._frame);
+    }
+
+    addLogicHook(func) {
+        this._logicHooks.push(func);
     }
 
 }

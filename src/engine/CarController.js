@@ -43,7 +43,7 @@ export default class CarController {
 
         const dir = this._speed >= 0 ? 1 : -1;
 
-        this._direction -= dir * directionChange * delta * 0.0625 * 0.02;
+        this._direction -= dir * directionChange * delta * 0.0007;
 
         if (
             Number.isNaN(this._speed) ||
