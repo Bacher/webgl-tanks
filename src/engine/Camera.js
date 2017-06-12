@@ -5,7 +5,7 @@ const PId2 = Math.PI / 2;
 
 export default class Camera {
 
-    constructor(engine) {
+    constructor(engine, options) {
         this.e = engine;
 
         this._forward = 0;
@@ -25,6 +25,8 @@ export default class Camera {
             z: 0,
         };
 
+        this.distance = options && options.distance || 200;
+
         this._mat = mat4.create();
     }
 
@@ -32,7 +34,7 @@ export default class Camera {
         const pos = this.position;
 
         mat4.identity(this._mat);
-        mat4.perspective(this._mat, FOV, this.aspectRatio, 0.1, 200);
+        mat4.perspective(this._mat, FOV, this.aspectRatio, 0.1, this.distance);
         mat4.translate(this._mat, this._mat, [0, 0, -5]);
         mat4.rotateX(this._mat, this._mat, -this.rotation.x);
         mat4.rotateY(this._mat, this._mat, -this.rotation.y);

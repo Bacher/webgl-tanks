@@ -9,6 +9,7 @@ import * as BasicShader from './shaders/basic';
 import * as TexturedShader from './shaders/textured';
 import * as PlainTexturedShader from './shaders/plain-textured';
 import * as SkyBoxShader from './shaders/skybox';
+import * as TerrainShader from './shaders/terrain';
 
 const PId2 = Math.PI / 2;
 
@@ -63,6 +64,9 @@ export default class Engine {
 
         this._shaders.skybox = new Shader(this, SkyBoxShader.v, SkyBoxShader.f);
         this._shaders.skybox.compile();
+
+        this._shaders.terrain = new Shader(this, TerrainShader.v, TerrainShader.f);
+        this._shaders.terrain.compile();
     }
 
     _addInputListeners() {
@@ -189,8 +193,8 @@ function normalizeAngle(rotation, dimension) {
     }
 }
 
-export function loadModel(engine, { model, alphaTextures }) {
-    const url = `models/${model}.json`;
+export function loadObj(modelName) {
+    const url = `models/${modelName}.json`;
 
     return fetch(url).then(res => {
         if (!res.ok) {
@@ -204,23 +208,27 @@ export function loadModel(engine, { model, alphaTextures }) {
             data.normals  = new Float32Array(data.normals);
             data.polygons = new Uint16Array(data.polygons);
 
-            const textures = {};
-            const waits = [];
-
-            for (let group of data.groups) {
-                const material  = group.material || group.id;
-                const isAlphaTexture = alphaTextures && alphaTextures.includes(material);
-                const extension      = isAlphaTexture ? 'png' : 'jpg';
-                const fileName       = `${model}__${material}.${extension}`;
-
-                waits.push(Texture.loadTexture(engine, fileName, isAlphaTexture).then(texture => {
-                    textures[material] = texture;
-                }));
-            }
-
-            return Promise.all(waits).then(() => {
-                return new Model(engine, data, textures);
-            });
+            return data;
         });
+    });
+}
+
+export function loadModel(engine, { model, alphaTextures }) {
+    return loadObj(model).then(data => {
+        const textures = {};
+        const waits = [];
+
+        for (let group of data.groups) {
+            const material  = group.material || group.id;
+            const isAlphaTexture = alphaTextures && alphaTextures.includes(material);
+            const extension      = isAlphaTexture ? 'png' : 'jpg';
+            const fileName       = `${model}__${material}.${extension}`;
+
+            waits.push(Texture.loadTexture(engine, fileName, isAlphaTexture).then(texture => {
+                textures[material] = texture;
+            }));
+        }
+
+        return Promise.all(waits).then(() => new Model(engine, data, textures));
     });
 }

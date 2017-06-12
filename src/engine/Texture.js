@@ -37,12 +37,12 @@ export default class Texture {
         gl.bindTexture(gl.TEXTURE_2D, null);
     }
 
-    activate(shader) {
+    activate(shader, paramName = 'uSampler', i = 0) {
         const gl = this.e.gl;
 
+        gl.activeTexture(gl[`TEXTURE${i}`]);
         gl.bindTexture(gl.TEXTURE_2D, this._texture);
-        gl.activeTexture(gl.TEXTURE0);
-        shader.setUniform('uSampler', 0);
+        shader.setUniform(paramName, i);
     }
 
 }

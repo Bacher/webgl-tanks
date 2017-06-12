@@ -5,6 +5,9 @@ const fs = require('fs');
 const pointsList = [];
 const points = new Map();
 
+let hasUV      = false;
+let hasNormals = false;
+
 function parseObj(objText) {
     const lines = objText.split(/\s*\n\s*/);
 
@@ -67,8 +70,13 @@ function parseObj(objText) {
                 normals.push(...rest.split(' ').map(Number));
                 break;
             case 'f':
-                currentGroup.size++;
-                polygons.push(rest.split(' ').map(point => {
+                const points = rest.split(' ');
+
+                if (points.length < 3) {
+                    break;
+                }
+
+                const pPoints = points.map(point => {
                     const parts = point.split('/');
 
                     const pointInfo = [Number(parts[0]) - 1];
@@ -82,10 +90,18 @@ function parseObj(objText) {
                     }
 
                     return pointInfo;
-                }));
+                });
+
+                for (let i = 0; i < pPoints.length - 2; i++) {
+                    polygons.push([pPoints[0], pPoints[i + 1], pPoints[i + 2]]);
+                    currentGroup.size++;
+                }
                 break;
         }
     }
+
+    hasUV      = uvs.length > 0;
+    hasNormals = normals.length > 0;
 
     const newPolygons = [];
 
@@ -97,14 +113,24 @@ function parseObj(objText) {
             const y = form(vertices[vertex * 3 + 1]);
             const z = form(vertices[vertex * 3 + 2]);
 
-            const u = form(uvs[uv * 2]);
-            const v = form(uvs[uv * 2 + 1]);
+            let pointKey = `${x},${y},${z}`;
 
-            const nx = form(normals[normal * 3]);
-            const ny = form(normals[normal * 3 + 1]);
-            const nz = form(normals[normal * 3 + 2]);
+            let u, v, nx, ny, nz;
 
-            let pointKey = `${x},${y},${z}_${u},${v}_${nx},${ny},${nz}`;
+            if (hasUV) {
+                u = form(uvs[uv * 2]);
+                v = form(uvs[uv * 2 + 1]);
+
+                pointKey += `_${u},${v}`;
+            }
+
+            if (hasNormals) {
+                nx = form(normals[normal * 3]);
+                ny = form(normals[normal * 3 + 1]);
+                nz = form(normals[normal * 3 + 2]);
+
+                pointKey += `_${nx},${ny},${nz}`;
+            }
 
             let vertexNumber;
 
@@ -119,9 +145,15 @@ function parseObj(objText) {
                 const newVertexInfo = {
                     n:   vertexNumber,
                     pos: [x, y, z],
-                    uv:  [u, v],
-                    nor: [nx, ny, nz],
                 };
+
+                if (hasUV) {
+                    newVertexInfo.uv = [u, v];
+                }
+
+                if (hasNormals) {
+                    newVertexInfo.nor = [nx, ny, nz];
+                }
 
                 pointsList.push(newVertexInfo);
                 points.set(pointKey, newVertexInfo);
@@ -137,13 +169,17 @@ function parseObj(objText) {
         boundBox.max[2] - boundBox.min[2],
     ];
 
+    const rx = size[0] / 2;
+    const ry = size[1] / 2;
+    const rz = size[2] / 2;
+
     const boundSphere = {
         center: [
             boundBox.min[0] + size[0] / 2,
             boundBox.min[1] + size[1] / 2,
             boundBox.min[2] + size[2] / 2,
         ],
-        radius: Math.max(...size) / 2,
+        radius: Math.sqrt(rx * rx + ry * ry + rz * rz),
     };
 
     return generateJSON({
@@ -175,25 +211,42 @@ function generateJSON({ polygons, pointsList, groups, boundBox, boundSphere }) {
     const uv  = [];
     const nor = [];
 
-    for (let point of pointsList) {
-        pos.push(point.pos.join(','));
-        uv.push(point.uv.join(','));
-        nor.push(point.nor.join(','));
-    }
-
-    let json = JSON.stringify({
+    const outputObj = {
         groups,
         boundBox,
         boundSphere,
         vertices: '%VERTICES%',
-        uvs:      '%UVS%',
-        normals:  '%NORMALS%',
         polygons: '%POLYGONS%',
-    }, null, 2);
+    };
+
+    for (let point of pointsList) {
+        pos.push(point.pos.join(','));
+
+        if (hasUV) {
+            uv.push(point.uv.join(','));
+
+            outputObj.uvs = '%UVS%';
+        }
+
+        if (hasNormals) {
+            nor.push(point.nor.join(','));
+
+            outputObj.normals = '%NORMALS%';
+        }
+    }
+
+    let json = JSON.stringify(outputObj, null, 2);
 
     json = json.replace('"%VERTICES%"', '[' + pos.join(',') + ']');
-    json = json.replace('"%UVS%"', '[' + uv.join(',') + ']');
-    json = json.replace('"%NORMALS%"', '[' + nor.join(',') + ']');
+
+    if (hasUV) {
+        json = json.replace('"%UVS%"', '[' + uv.join(',') + ']');
+    }
+
+    if (hasNormals) {
+        json = json.replace('"%NORMALS%"', '[' + nor.join(',') + ']');
+    }
+
     json = json.replace('"%POLYGONS%"', '[' + polygons.join(',') + ']');
 
     console.error('Success convert');

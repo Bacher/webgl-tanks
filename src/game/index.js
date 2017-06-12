@@ -1,7 +1,7 @@
-import Engine, { loadModel } from '../engine/Engine';
+import Engine, { loadModel, loadObj } from '../engine/Engine';
 import Camera from '../engine/Camera';
 import Texture from '../engine/Texture';
-import Plain from '../engine/Plain';
+import Plain from '../engine/Terrain';
 import SkyBox from '../engine/SkyBox';
 import CarController from '../engine/CarController';
 
@@ -10,7 +10,7 @@ const PI2 = Math.PI * 2;
 window.normalizeAngle = normalizeAngle;
 
 const game = new Engine(document.getElementById('game-view'));
-const camera = new Camera(game);
+const camera = new Camera(game, { distance: 1000 });
 
 camera.position.y = 1.7;
 
@@ -70,8 +70,16 @@ Promise.all([
 
     game.startDrawCycle();
 
-    Texture.loadTexture(game, 'grass.jpg').then(texture => {
-        const plain = new Plain(game, texture, {
+    Promise.all([
+        Texture.loadTexture(game, 'grass.jpg'),
+        Texture.loadTexture(game, 'stone-road.jpg'),
+        Texture.loadTexture(game, 'terrain.jpg'),
+        loadObj('ground'),
+    ]).then(([grass, stoneRoad, depthmap, groundMesh]) => {
+        const plain = new Plain(game, {
+            meshInfo: groundMesh,
+            textures: [grass, stoneRoad],
+            depthmap,
             repeat: [16, 16],
             size:   [128, 128],
         });
