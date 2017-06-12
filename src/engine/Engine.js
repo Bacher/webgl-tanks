@@ -5,6 +5,7 @@ import Model from './Model';
 import Texture from './Texture';
 import Camera from './Camera';
 import Keyboard from './Keyboard';
+import SoundSystem from './SoundSystem';
 import * as BasicShader from './shaders/basic';
 import * as TexturedShader from './shaders/textured';
 import * as PlainTexturedShader from './shaders/plain-textured';
@@ -46,6 +47,7 @@ export default class Engine {
         this._logicHooks = [];
 
         this.keyboard = new Keyboard(this);
+        this.soundSystem = new SoundSystem();
 
         this._initShaderPrograms();
 

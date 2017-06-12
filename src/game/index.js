@@ -24,11 +24,12 @@ Promise.all([
         model: 'oak',
         alphaTextures: ['blaetter'],
     }),
-    SkyBox.loadSkyBox(game, 'skybox.jpg')
+    SkyBox.loadSkyBox(game, 'skybox.jpg'),
+    game.soundSystem.loadAudio('tank-shoot.wav', 'tank-shoot'),
 ]).then(([tank, oak, skyBox]) => {
     game.keyboard.on('keydown', key => {
-        if (key === 'q') {
-            console.log('QQ');
+        if (key === 'space') {
+            game.soundSystem.play('tank-shoot');
         }
     });
 

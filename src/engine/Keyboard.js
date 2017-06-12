@@ -1,6 +1,7 @@
 import _ from 'lodash';
 
 const KEYS = new Map([
+    [32, 'space'],
     [87, 'w'],
     [83, 's'],
     [65, 'a'],
@@ -55,6 +56,10 @@ export default class Controller {
 
     _onKeyDown(e) {
         if (this.e.isActive()) {
+            if (!e.metaKey && !e.ctrlKey) {
+                e.preventDefault();
+            }
+
             const key = KEYS.get(e.which);
 
             if (key) {
