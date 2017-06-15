@@ -31,8 +31,8 @@ export default class Shader {
         gl.useProgram(program);
 
         for (let shaderText of [this._vst, this._fst]) {
-            const uniformRx    = /uniform\s+([^ ]+)\s+([^\s;]+)/g;
-            const attributesRx = /attribute\s+([^ ]+)\s+([^\s;]+)/g;
+            const uniformRx    = /uniform\s+([^ ]+)\s+([^;]+)/g;
+            const attributesRx = /attribute\s+([^ ]+)\s+([^;]+)/g;
 
             let match;
 
@@ -43,18 +43,20 @@ export default class Shader {
                     break;
                 }
 
-                const [, type, name] = match;
+                const [, type, names] = match;
 
-                const location = gl.getUniformLocation(program, name);
+                for (let name of names.trim().split(/\s*,\s*/)) {
+                    const location = gl.getUniformLocation(program, name);
 
-                if (location == null) {
-                    throw new Error(`Bad uniform location [${name}]`);
+                    if (location == null) {
+                        throw new Error(`Bad uniform location [${name}]`);
+                    }
+
+                    this.uniforms[name] = {
+                        location,
+                        type,
+                    };
                 }
-
-                this.uniforms[name] = {
-                    location,
-                    type,
-                };
             }
 
             while (true) {
@@ -64,18 +66,20 @@ export default class Shader {
                     break;
                 }
 
-                const [, type, name] = match;
+                const [, type, names] = match;
 
-                const location = gl.getAttribLocation(program, name);
+                for (let name of names.trim().split(/\s*,\s*/)) {
+                    const location = gl.getAttribLocation(program, name);
 
-                if (location == null) {
-                    throw new Error(`Bad attribute location [${name}]`);
+                    if (location == null) {
+                        throw new Error(`Bad attribute location [${name}]`);
+                    }
+
+                    this.attributes[name] = {
+                        location,
+                        type,
+                    };
                 }
-
-                this.attributes[name] = {
-                    location,
-                    type,
-                };
             }
         }
     }
@@ -107,7 +111,7 @@ export default class Shader {
         const uniform = this.uniforms[name];
 
         if (!uniform) {
-            //throw new Error(`Uniform [${name}] not found in shader`);
+            throw new Error(`Uniform [${name}] not found in shader`);
             return;
         }
 
@@ -116,6 +120,9 @@ export default class Shader {
         switch (uniform.type) {
             case 'vec2':
                 gl.uniform2fv(location, value);
+                break;
+            case 'vec3':
+                gl.uniform3fv(location, value);
                 break;
             case 'mat4':
                 gl.uniformMatrix4fv(location, false, value);

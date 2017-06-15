@@ -29,6 +29,8 @@ export default class Engine {
 
         this._canvas = canvas;
 
+        this.zeroOrigin = vec3.create();
+
         this._firstDraw = true;
 
         this._width  = 600;
@@ -156,12 +158,19 @@ export default class Engine {
 
         const mCamera = this.camera.getMatrix();
 
+        const lightDir = vec3.fromValues(1, 1, 0);
+        vec3.normalize(lightDir, lightDir);
+
         for (let model of this._sceneModels) {
             const shader = this._shaders[model.shader];
             shader.use();
             shader.setUniform('umCamera', mCamera);
 
-            model.draw(shader, mCamera);
+            // if (shader.uniforms['uLightDir'] != null) {
+            //     shader.setUniform('uLightDir', lightDir);
+            // }
+
+            model.draw(shader, mCamera, lightDir);
         }
     }
 

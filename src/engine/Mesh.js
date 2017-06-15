@@ -41,7 +41,7 @@ export default class Mesh {
 
         shader.setAttribute('aPos', this._pos);
         shader.setAttribute('aUV', this._uvs);
-        //shader.setAttribute('aNormal', this._nor);
+        shader.setAttribute('aNormal', this._nor);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._ele);
     }

@@ -56,13 +56,15 @@ export default class Model {
         this._textures = textures;
     }
 
-    draw(shader, mCamera) {
+    draw(shader, mCamera, lightDir) {
         const gl = this.e.gl;
 
         const p = this.position;
         const r = this.rotation;
         const s = this.scale;
         const m = this._mPos;
+
+        const trLightDir = vec3.clone(lightDir);
 
         mat4.identity(m);
         mat4.translate(m, m, [p.x, p.y, p.z]);
@@ -71,14 +73,17 @@ export default class Model {
 
         if (r.x) {
             mat4.rotateX(m, m, r.x);
+            vec3.rotateX(trLightDir, trLightDir, this.e.zeroOrigin, -r.x);
         }
 
         if (r.y) {
             mat4.rotateY(m, m, r.y);
+            vec3.rotateY(trLightDir, trLightDir, this.e.zeroOrigin, -r.y);
         }
 
         if (r.z) {
             mat4.rotateZ(m, m, r.z);
+            vec3.rotateZ(trLightDir, trLightDir, this.e.zeroOrigin, -r.z);
         }
 
         if (!this._checkVisibility(mCamera, m)) {
@@ -96,7 +101,8 @@ export default class Model {
             }
 
             texture.activate(shader);
-            part.draw(shader, m);
+
+            part.draw(shader, m, trLightDir);
 
             if (texture.isAlpha) {
                 gl.disable(gl.BLEND);
