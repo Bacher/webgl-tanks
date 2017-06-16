@@ -36,6 +36,10 @@ Promise.all([
     const turret = tank.getPart('Turret_2');
 
     game.addLogicHook(delta => {
+        if (game.isObserverMode) {
+            return;
+        }
+
         const _delta = delta * 0.0008;
 
         const needAngle  = camera.rotation.y - tank.rotation.y;
@@ -60,8 +64,10 @@ Promise.all([
 
     game.addModel(tank);
 
-    const cc = new CarController(game, tank);
-    game.addController(cc);
+    if (!game.isObserverMode) {
+        const cc = new CarController(game, tank);
+        game.addController(cc);
+    }
 
     game.setSkyBox(skyBox);
 

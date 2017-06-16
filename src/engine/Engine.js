@@ -8,6 +8,7 @@ import Keyboard from './Keyboard';
 import SoundSystem from './SoundSystem';
 import * as BasicShader from './shaders/basic';
 import * as TexturedShader from './shaders/textured';
+import * as TexturedPolyShader from './shaders/textured-poly';
 import * as PlainTexturedShader from './shaders/plain-textured';
 import * as SkyBoxShader from './shaders/skybox';
 import * as TerrainShader from './shaders/terrain';
@@ -30,6 +31,8 @@ export default class Engine {
         this._canvas = canvas;
 
         this.zeroOrigin = vec3.create();
+
+        this.isObserverMode = /\bobs\b/.test(window.location.search);
 
         this._firstDraw = true;
 
@@ -62,6 +65,9 @@ export default class Engine {
 
         this._shaders.textured = new Shader(this, TexturedShader.v, TexturedShader.f);
         this._shaders.textured.compile();
+
+        this._shaders.texturedPoly = new Shader(this, TexturedPolyShader.v, TexturedPolyShader.f);
+        this._shaders.texturedPoly.compile();
 
         this._shaders.plainTextured = new Shader(this, PlainTexturedShader.v, PlainTexturedShader.f);
         this._shaders.plainTextured.compile();

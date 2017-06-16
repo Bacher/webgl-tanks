@@ -35,7 +35,11 @@ export default class Camera {
 
         mat4.identity(this._mat);
         mat4.perspective(this._mat, FOV, this.aspectRatio, 0.1, this.distance);
-        mat4.translate(this._mat, this._mat, [0, 0, -5]);
+
+        if (!this.e.isObserverMode) {
+            mat4.translate(this._mat, this._mat, [0, 0, -5]);
+        }
+
         mat4.rotateX(this._mat, this._mat, -this.rotation.x);
         mat4.rotateY(this._mat, this._mat, -this.rotation.y);
         mat4.translate(this._mat, this._mat, [-pos.x, -pos.y, -pos.z]);
@@ -56,7 +60,10 @@ export default class Camera {
     }
 
     applyMovement(delta) {
-        return;
+        if (!this.e.isObserverMode) {
+            return;
+        }
+
         const keyboard = this.e.keyboard;
 
         this._forward = 0;

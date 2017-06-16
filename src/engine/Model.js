@@ -6,7 +6,8 @@ export default class Model {
     constructor(engine, meshInfo, textures) {
         this.e = engine;
 
-        this.shader = 'textured';
+        //this.shader = 'textured';
+        this.shader = 'texturedPoly';
 
         const bb = this.boundBox = meshInfo.boundBox;
         this.boundSphere = meshInfo.boundSphere;
