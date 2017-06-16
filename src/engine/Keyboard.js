@@ -1,6 +1,7 @@
 import _ from 'lodash';
 
 const KEYS = new Map([
+    [16, 'shift'],
     [32, 'space'],
     [87, 'w'],
     [83, 's'],

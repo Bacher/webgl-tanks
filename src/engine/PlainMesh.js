@@ -7,19 +7,21 @@ const buffers = {
 
 export default class PlainMesh {
 
-    constructor(engine, repeat) {
+    constructor(engine) {
         this.e = engine;
 
         const gl = this.e.gl;
 
-        this._repeat = repeat ? vec2.fromValues(...repeat) : vec2.fromValues(1, 1);
-
         if (!buffers.pos) {
             const pos = new Float32Array([
-                -1, 0, -1,
-                -1, 0, 1,
-                1, 0, 1,
-                1, 0, -1,
+                // 1, 1, 0,
+                // 1, -1, 0,
+                // -1, -1, 0,
+                // -1, 1, 0,
+                -1, 1, 0,
+                -1, -1, 0,
+                1, -1, 0,
+                1, 1, -0,
                 // 1, 1, 0,
                 // -1, 1, 0,
                 // 1, -1, 0,
@@ -48,7 +50,6 @@ export default class PlainMesh {
     applyBuffers(shader) {
         //const gl = this.e.gl;
 
-        shader.setUniform('repeat', this._repeat);
         shader.setAttribute('aPos', buffers.pos);
         shader.setAttribute('aUV', buffers.uvs);
         //shader.setAttribute('aNormal', this._nor);

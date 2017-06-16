@@ -3,17 +3,26 @@ import _ from 'lodash';
 import Shader from './Shader';
 import Model from './Model';
 import Texture from './Texture';
+import TextureWrapper from './TextureWrapper';
 import Camera from './Camera';
 import Keyboard from './Keyboard';
 import SoundSystem from './SoundSystem';
+import TextureVisualizator from './TextureVisualizator';
 import * as BasicShader from './shaders/basic';
 import * as TexturedShader from './shaders/textured';
+import * as LightTexturedShader from './shaders/textured-light';
 import * as TexturedPolyShader from './shaders/textured-poly';
 import * as PlainTexturedShader from './shaders/plain-textured';
 import * as SkyBoxShader from './shaders/skybox';
 import * as TerrainShader from './shaders/terrain';
+import * as TerrainShadowShader from './shaders/terrain-shadow';
+import * as DepthMapShader from './shaders/depthmap';
 
 const PId2 = Math.PI / 2;
+const DEPTHMAP_SIZE = 512;
+
+const iden4 = mat4.create();
+mat4.identity(iden4);
 
 window.vec3 = vec3;
 window.vec4 = vec4;
@@ -57,6 +66,8 @@ export default class Engine {
         this._initShaderPrograms();
 
         this._addInputListeners();
+
+        this._initDepthMap();
     }
 
     _initShaderPrograms() {
@@ -65,6 +76,9 @@ export default class Engine {
 
         this._shaders.textured = new Shader(this, TexturedShader.v, TexturedShader.f);
         this._shaders.textured.compile();
+
+        this._shaders.texturedLight = new Shader(this, LightTexturedShader.v, LightTexturedShader.f);
+        this._shaders.texturedLight.compile();
 
         this._shaders.texturedPoly = new Shader(this, TexturedPolyShader.v, TexturedPolyShader.f);
         this._shaders.texturedPoly.compile();
@@ -77,6 +91,37 @@ export default class Engine {
 
         this._shaders.terrain = new Shader(this, TerrainShader.v, TerrainShader.f);
         this._shaders.terrain.compile();
+
+        this._shaders.terrainShadow = new Shader(this, TerrainShadowShader.v, TerrainShadowShader.f);
+        this._shaders.terrainShadow.compile();
+
+        this._shaders.depthmap = new Shader(this, DepthMapShader.v, DepthMapShader.f);
+        this._shaders.depthmap.compile();
+    }
+
+    _initDepthMap() {
+        const gl = this.gl;
+
+        const ext = gl.getExtension('WEBGL_depth_texture');
+
+        if (!ext) {
+            throw new Error('Depth texture not supported');
+        }
+
+        this._depthTexture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this._depthTexture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT, DEPTHMAP_SIZE, DEPTHMAP_SIZE, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);
+
+        this._depthFrameBuffer = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this._depthFrameBuffer);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, this._depthTexture, 0);
+
+        this._depthTextureWrapper = new TextureWrapper(this, this._depthTexture);
+        this._textureVisualizator = new TextureVisualizator(this, this._depthTextureWrapper);
     }
 
     _addInputListeners() {
@@ -152,6 +197,47 @@ export default class Engine {
             gl.enable(gl.DEPTH_TEST);
         }
 
+        const lightDir = vec3.fromValues(-0.7780731916427612, -0.5285899043083191, 0.3394036591053009);
+        vec3.normalize(lightDir, lightDir);
+
+        // +DEPTH
+
+        const depthShader = this._shaders.depthmap;
+        depthShader.use();
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this._depthFrameBuffer);
+
+        gl.viewport(0, 0, DEPTHMAP_SIZE, DEPTHMAP_SIZE);
+        //gl.clearColor(0, 0, 0, 1);
+        //gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.clear(gl.DEPTH_BUFFER_BIT);
+
+        //const mLightProjection = this.camera.getMatrix();
+        const mLightProjection = mat4.create();
+        mat4.ortho(mLightProjection, -45, 45, -45, 45, 0, 120);
+        //mat4.identity(mLightProjection);
+        //mat4.perspective(45, 1, 0.1, 1000, mLightProjection);
+
+        //mat4.rotateY(mLightProjection, mLightProjection, -this.camera.rotation.y);
+        //mat4.translate(mLightProjection, mLightProjection, [-this.camera.position.x, -50, -this.camera.position.z]);
+        mat4.rotateX(mLightProjection, mLightProjection, 0.6);
+        mat4.rotateY(mLightProjection, mLightProjection, 1.22);
+
+        mat4.translate(mLightProjection, mLightProjection, [12.8, -50, 6.43]);
+
+        window.mLightProjection = mLightProjection;
+        depthShader.setUniform('umCamera', mLightProjection);
+
+        for (let model of this._sceneModels) {
+            if (model.drawForDepthMap) {
+                model.drawForDepthMap(depthShader);
+            }
+        }
+
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+        // -DEPTH
+
         gl.viewport(0, 0, this._width, this._height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -164,9 +250,6 @@ export default class Engine {
 
         const mCamera = this.camera.getMatrix();
 
-        const lightDir = vec3.fromValues(1, 1, 0);
-        vec3.normalize(lightDir, lightDir);
-
         for (let model of this._sceneModels) {
             const shader = this._shaders[model.shader];
             shader.use();
@@ -178,6 +261,11 @@ export default class Engine {
 
             model.draw(shader, mCamera, lightDir);
         }
+
+        const shader = this._shaders.textured;
+        shader.use();
+        shader.setUniform('umCamera', iden4);
+        this._textureVisualizator.draw(shader);
     }
 
     startDrawCycle() {

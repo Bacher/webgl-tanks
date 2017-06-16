@@ -93,6 +93,10 @@ export default class Camera {
 
         distance *= delta * 0.01;
 
+        if (keyboard.keys.has('shift')) {
+            distance *= 0.5;
+        }
+
         if (this._forward !== 0) {
             const sin = Math.sin(-this.rotation.y);
             const cos = Math.cos(-this.rotation.y);

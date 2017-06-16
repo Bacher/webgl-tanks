@@ -54,4 +54,30 @@ export default class MeshPart {
         gl.drawElements(gl.TRIANGLES, this.size * 3, gl.UNSIGNED_SHORT, this.offset * 6);
     }
 
+    drawForDepthMap(shader, mModel) {
+        const r   = this.rotation;
+        let model = mModel;
+
+        if (r) {
+            if (r.x) {
+                mat4.rotateX(this._m, mModel, r.x);
+                model = this._m;
+            }
+
+            if (r.y) {
+                mat4.rotateY(this._m, mModel, r.y);
+                model = this._m;
+            }
+
+            if (r.z) {
+                mat4.rotateZ(this._m, mModel, r.z);
+                model = this._m;
+            }
+        }
+
+        shader.setUniform('umModel', model);
+
+        gl.drawElements(gl.TRIANGLES, this.size * 3, gl.UNSIGNED_SHORT, this.offset * 6);
+    }
+
 }

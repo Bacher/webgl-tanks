@@ -31,6 +31,10 @@ Promise.all([
         if (key === 'space') {
             game.soundSystem.play('tank-shoot');
         }
+
+        if (key === 'q') {
+            console.log('Camera pos:', camera.position, 'rotation:', camera.rotation);
+        }
     });
 
     const turret = tank.getPart('Turret_2');
@@ -68,6 +72,10 @@ Promise.all([
         const cc = new CarController(game, tank);
         game.addController(cc);
     }
+
+    setInterval(() => {
+        tank.position.z += 0.01;
+    }, 16);
 
     game.setSkyBox(skyBox);
 

@@ -36,12 +36,15 @@ export default class Mesh {
         return this._partsHash[name];
     }
 
-    applyBuffers(shader) {
+    applyBuffers(shader, isDepthMap) {
         const gl = this.e.gl;
 
         shader.setAttribute('aPos', this._pos);
-        shader.setAttribute('aUV', this._uvs);
-        shader.setAttribute('aNormal', this._nor);
+
+        if (!isDepthMap) {
+            shader.setAttribute('aUV', this._uvs);
+            shader.setAttribute('aNormal', this._nor);
+        }
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._ele);
     }

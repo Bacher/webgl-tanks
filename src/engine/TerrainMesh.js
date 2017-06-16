@@ -1,6 +1,6 @@
 import { vec2 } from 'gl-matrix';
 
-export default class PlainMesh {
+export default class TerrainMesh {
 
     constructor(engine, meshInfo, repeat) {
         this.e = engine;

@@ -6,7 +6,8 @@ export default class Model {
     constructor(engine, options) {
         this.e = engine;
 
-        this.shader = 'terrain';
+        //this.shader = 'terrain';
+        this.shader = 'terrainShadow';
 
         this.scale = [
             options.size[0],
@@ -29,12 +30,15 @@ export default class Model {
         mat4.identity(m);
         mat4.scale(m, m, s);
         shader.setUniform('umModel', m);
+        shader.setUniform('umLight', window.mLightProjection);
 
         this._depthmap.activate(shader, 'uDepthSampler', 0);
 
         for (let i = 0; i < this._textures.length; i++) {
             this._textures[i].activate(shader, `uSampler${i + 1}`, i + 1);
         }
+
+        this.e._depthTextureWrapper.activate(shader, 'uDepthMapSampler', this._textures.length + 1);
 
         this._mesh.applyBuffers(shader);
         this._mesh.draw();

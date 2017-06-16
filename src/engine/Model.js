@@ -111,6 +111,40 @@ export default class Model {
         }
     }
 
+    drawForDepthMap(shader) {
+        const gl = this.e.gl;
+
+        const p = this.position;
+        const r = this.rotation;
+        const s = this.scale;
+        const m = this._mPos;
+
+        mat4.identity(m);
+        mat4.translate(m, m, [p.x, p.y, p.z]);
+
+        mat4.scale(m, m, s);
+
+        if (r.x) {
+            mat4.rotateX(m, m, r.x);
+        }
+
+        if (r.y) {
+            mat4.rotateY(m, m, r.y);
+        }
+
+        if (r.z) {
+            mat4.rotateZ(m, m, r.z);
+        }
+
+        // TODO: CHECK VISIBILITY
+
+        this._mesh.applyBuffers(shader, true);
+
+        for (let part of this._mesh.parts) {
+            part.drawForDepthMap(shader, m);
+        }
+    }
+
     getPart(name) {
         return this._mesh.getPart(name);
     }
