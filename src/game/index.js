@@ -86,8 +86,8 @@ Promise.all([
     game.startDrawCycle();
 
     Promise.all([
-        Texture.loadTexture(game, 'grass.jpg'),
-        Texture.loadTexture(game, 'stone-road.jpg'),
+        Texture.loadTexture(game, 'grass.jpg', { wrap: 'repeat' }),
+        Texture.loadTexture(game, 'stone-road.jpg', { wrap: 'repeat' }),
         Texture.loadTexture(game, 'terrain.jpg'),
         loadObj('ground'),
     ]).then(([grass, stoneRoad, depthmap, groundMesh]) => {

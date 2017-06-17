@@ -321,7 +321,7 @@ export function loadModel(engine, { model, alphaTextures }) {
             const extension      = isAlphaTexture ? 'png' : 'jpg';
             const fileName       = `${model}__${material}.${extension}`;
 
-            waits.push(Texture.loadTexture(engine, fileName, isAlphaTexture).then(texture => {
+            waits.push(Texture.loadTexture(engine, fileName, { alpha: isAlphaTexture }).then(texture => {
                 textures[material] = texture;
             }));
         }

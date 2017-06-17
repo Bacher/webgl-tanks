@@ -3,12 +3,12 @@ const textures = new Map();
 
 export default class Texture {
 
-    static loadTexture(engine, fileName, isAlpha) {
+    static loadTexture(engine, fileName, textureOptions) {
         return new Promise((resolve, reject) => {
             const image = new Image();
 
             image.addEventListener('load', () => {
-                resolve(new Texture(engine, image, isAlpha));
+                resolve(new Texture(engine, image, textureOptions));
             });
 
             image.addEventListener('error', () => {
@@ -19,11 +19,11 @@ export default class Texture {
         });
     }
 
-    constructor(engine, textureImage, isAlpha) {
+    constructor(engine, textureImage, textureOptions = false) {
         this.e = engine;
         const gl = this.e.gl;
 
-        this.isAlpha = Boolean(isAlpha);
+        this.isAlpha = Boolean(textureOptions.alpha);
 
         this._texture = gl.createTexture();
 
@@ -32,6 +32,12 @@ export default class Texture {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, textureImage);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+        if (textureOptions.wrap == null) {
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        }
+
         gl.generateMipmap(gl.TEXTURE_2D);
 
         gl.bindTexture(gl.TEXTURE_2D, null);
