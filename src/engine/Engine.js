@@ -8,6 +8,7 @@ import Camera from './Camera';
 import Keyboard from './Keyboard';
 import SoundSystem from './SoundSystem';
 import TextureVisualizator from './TextureVisualizator';
+
 import * as BasicShader from './shaders/basic';
 import * as TexturedShader from './shaders/textured';
 import * as LightTexturedShader from './shaders/textured-light';
@@ -16,10 +17,11 @@ import * as PlainTexturedShader from './shaders/plain-textured';
 import * as SkyBoxShader from './shaders/skybox';
 import * as TerrainShader from './shaders/terrain';
 import * as TerrainShadowShader from './shaders/terrain-shadow';
+import * as TerrainShadowSubShader from './shaders/terrain-shadow-sub';
 import * as DepthMapShader from './shaders/depthmap';
 
 const PId2 = Math.PI / 2;
-const DEPTHMAP_SIZE = 512;
+const DEPTHMAP_SIZE = 2048;
 
 const iden4 = mat4.create();
 mat4.identity(iden4);
@@ -71,32 +73,22 @@ export default class Engine {
     }
 
     _initShaderPrograms() {
-        this._shaders.basic = new Shader(this, BasicShader.v, BasicShader.f);
-        this._shaders.basic.compile();
+        this._shaders.basic            = this._initShader(BasicShader);
+        this._shaders.textured         = this._initShader(TexturedShader);
+        this._shaders.texturedLight    = this._initShader(LightTexturedShader);
+        this._shaders.texturedPoly     = this._initShader(TexturedPolyShader);
+        this._shaders.plainTextured    = this._initShader(PlainTexturedShader);
+        this._shaders.skybox           = this._initShader(SkyBoxShader);
+        this._shaders.terrain          = this._initShader(TerrainShader);
+        this._shaders.terrainShadow    = this._initShader(TerrainShadowShader);
+        this._shaders.terrainShadowSub = this._initShader(TerrainShadowSubShader);
+        this._shaders.depthmap         = this._initShader(DepthMapShader);
+    }
 
-        this._shaders.textured = new Shader(this, TexturedShader.v, TexturedShader.f);
-        this._shaders.textured.compile();
-
-        this._shaders.texturedLight = new Shader(this, LightTexturedShader.v, LightTexturedShader.f);
-        this._shaders.texturedLight.compile();
-
-        this._shaders.texturedPoly = new Shader(this, TexturedPolyShader.v, TexturedPolyShader.f);
-        this._shaders.texturedPoly.compile();
-
-        this._shaders.plainTextured = new Shader(this, PlainTexturedShader.v, PlainTexturedShader.f);
-        this._shaders.plainTextured.compile();
-
-        this._shaders.skybox = new Shader(this, SkyBoxShader.v, SkyBoxShader.f);
-        this._shaders.skybox.compile();
-
-        this._shaders.terrain = new Shader(this, TerrainShader.v, TerrainShader.f);
-        this._shaders.terrain.compile();
-
-        this._shaders.terrainShadow = new Shader(this, TerrainShadowShader.v, TerrainShadowShader.f);
-        this._shaders.terrainShadow.compile();
-
-        this._shaders.depthmap = new Shader(this, DepthMapShader.v, DepthMapShader.f);
-        this._shaders.depthmap.compile();
+    _initShader({ v, f }) {
+        const shader = new Shader(this, v, f);
+        shader.compile();
+        return shader;
     }
 
     _initDepthMap() {
