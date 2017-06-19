@@ -34,7 +34,7 @@ void main(void) {
 
     float power = 1.0;
 
-    if (depthZ < vLight.z) {
+    if (depthZ < vLight.z - 0.001) {
         power = 0.3;
     }
 

@@ -7,7 +7,7 @@ export default class Model {
         this.e = engine;
 
         //this.shader = 'terrain';
-        this.shader = 'terrainShadowSub';
+        this.shader = 'terrainShadow';
 
         this.scale = [
             options.size[0],
