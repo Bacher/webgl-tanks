@@ -5,12 +5,19 @@ import Plain from '../engine/Terrain';
 import SkyBox from '../engine/SkyBox';
 import CarController from '../engine/CarController';
 
+import Connection from './Connection';
+
 const PI2 = Math.PI * 2;
 
 window.normalizeAngle = normalizeAngle;
 
-const game = new Engine(document.getElementById('game-view'));
+const game   = new Engine(document.getElementById('game-view'));
 const camera = new Camera(game, { distance: 1000 });
+const connection = new Connection();
+
+connection.onMessage(message => {
+
+});
 
 camera.position.y = 1.7;
 
@@ -25,8 +32,12 @@ Promise.all([
         alphaTextures: ['blaetter'],
     }),
     SkyBox.loadSkyBox(game, 'skybox.jpg'),
+    connection.connect(),
     game.soundSystem.loadAudio('tank-shoot.wav', 'tank-shoot'),
-]).then(([tank, oak, skyBox]) => {
+]).then(([tank, oak, skyBox, initialData]) => {
+
+    console.log(initialData);
+
     game.keyboard.on('keydown', key => {
         if (key === 'space') {
             game.soundSystem.play('tank-shoot');
@@ -72,10 +83,6 @@ Promise.all([
         const cc = new CarController(game, tank);
         game.addController(cc);
     }
-
-    setInterval(() => {
-        tank.position.z += 0.01;
-    }, 16);
 
     game.setSkyBox(skyBox);
 
