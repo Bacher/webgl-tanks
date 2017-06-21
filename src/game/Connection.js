@@ -1,8 +1,8 @@
 
 export default class Connection {
 
-    constructor() {
-
+    constructor(game) {
+        this.g = game;
     }
 
     connect() {
@@ -11,6 +11,7 @@ export default class Connection {
 
             this._ws.addEventListener('open', () => {
                 console.log('Socket opened');
+                resolve();
             });
 
             this._ws.addEventListener('error', err => {
@@ -21,15 +22,11 @@ export default class Connection {
             this._ws.addEventListener('message', e => {
                 const message = JSON.parse(e.data);
 
-                if (message.type === 'initial') {
-                    resolve(message.data);
-                } else {
-                    this._msgCallback(message);
-                }
+                this._msgCallback(message.type, message.data);
             });
 
             this._ws.addEventListener('close', () => {
-                console.log('socket closed');
+                console.log('Socket closed');
             });
         });
     }
@@ -38,9 +35,9 @@ export default class Connection {
         this._msgCallback = callback;
     }
 
-    send(name, data) {
+    send(type, data) {
         const json = JSON.stringify({
-            name,
+            type,
             data,
         });
 
