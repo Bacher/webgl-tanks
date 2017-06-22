@@ -22,7 +22,7 @@ export default class Connection {
             this._ws.addEventListener('message', e => {
                 const message = JSON.parse(e.data);
 
-                this._msgCallback(message.type, message.data);
+                this._msgCallback(message);
             });
 
             this._ws.addEventListener('close', () => {

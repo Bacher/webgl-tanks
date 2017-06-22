@@ -3,6 +3,8 @@ import { vec3, mat4 } from 'gl-matrix';
 export default class MeshPart {
 
     constructor(engine, mesh, info) {
+        if (engine === -1) return;
+
         this.e = engine;
 
         this._mesh    = mesh;
@@ -10,16 +12,29 @@ export default class MeshPart {
         this.material = info.material;
         this.offset   = info.offset;
         this.size     = info.size;
-        this.relation = info.relation || 'static';
+        this.relation = info.relation || undefined;
 
-        if (this.relation.includes('rotation')) {
-            this.rotation = {
-                x: 0,
-                y: 0,
-                z: 0,
-            };
+        this._addRelations();
+    }
 
-            this._m = mat4.create();
+    clone() {
+        if (this.relation) {
+            const newMeshPart = new MeshPart(-1);
+
+            newMeshPart.e        = this.e;
+            newMeshPart._mesh    = this._mesh;
+            newMeshPart.id       = this.id;
+            newMeshPart.material = this.material;
+            newMeshPart.offset   = this.offset;
+            newMeshPart.size     = this.size;
+            newMeshPart.relation = this.relation;
+
+            newMeshPart._addRelations();
+
+            return newMeshPart
+
+        } else {
+            return this;
         }
     }
 
@@ -78,6 +93,18 @@ export default class MeshPart {
         shader.setUniform('umModel', model);
 
         gl.drawElements(gl.TRIANGLES, this.size * 3, gl.UNSIGNED_SHORT, this.offset * 6);
+    }
+
+    _addRelations() {
+        if (this.relation && this.relation.includes('rotation')) {
+            this.rotation = {
+                x: 0,
+                y: 0,
+                z: 0,
+            };
+
+            this._m = mat4.create();
+        }
     }
 
 }

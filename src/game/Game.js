@@ -1,9 +1,9 @@
-import Engine, { loadModel, loadObj } from '../engine/Engine';
+import Engine, { loadMeshAndTextures, loadObj } from '../engine/Engine';
 import Camera from '../engine/Camera';
 import Texture from '../engine/Texture';
 import Plain from '../engine/Terrain';
+import Model from '../engine/Model';
 import SkyBox from '../engine/SkyBox';
-import CarController from '../engine/CarController';
 import Connection from './Connection';
 import { parseSearchQuery } from './utils';
 
@@ -12,23 +12,22 @@ const PI2 = Math.PI * 2;
 export default class Game {
 
     constructor() {
-        this.models   = new Map();
+        this.meshes   = new Map();
         this.textures = new Map();
 
         this.searchParams = parseSearchQuery();
 
-        this.playerName = this.searchParams.name || 'Random_' + Math.random().substr(2, 8);
+        this.playerName = this.searchParams.name || 'Random_' + Math.random().toString().substr(2, 8);
 
-        this.engine = new Engine(document.getElementById('game-view'));
-        this.camera = new Camera(this.engine, { distance: 1000 });
-        this.socket = new Connection();
-        this.tanks  = [];
-        this.tank   = null;
+        this.engine   = new Engine(document.getElementById('game-view'));
+        this.camera   = new Camera(this.engine, { distance: 1000 });
+        this.socket   = new Connection();
+        this.tanksMap = new Map();
 
         this._isStarted = false;
 
         this.socket.onMessage(message => {
-            this._handleMessage(message);
+            this._handleMessage(message.type, message.data);
         });
 
         this.camera.position.y = 1.7;
@@ -68,39 +67,32 @@ export default class Game {
         this._addStaticGameObjects();
 
         this._bindKeyboard();
-
-        // const turret = tank.getPart('Turret_2');
-        //
-        // tank.position = {
-        //     x: 0,
-        //     y: -tank.boundBox.min[1],
-        //     z: -7,
-        // };
-        //
-        // engine.addModel(tank);
-        //
-        // if (!engine.isObserverMode) {
-        //     const cc = new CarController(engine, tank);
-        //     engine.addController(cc);
-        // }
     }
 
     start() {
         this._isStarted = true;
         this.engine.startDrawCycle();
+
+        if (!this.engine.isObserverMode) {
+            this._sendInput();
+
+            setInterval(() => {
+                this._sendInput();
+            }, 1000 / 30);
+        }
     }
 
     _loadResources() {
         const engine = this.engine;
 
         return Promise.all([
-            loadModel(engine, {
+            loadMeshAndTextures(engine, {
                 model: 'tank',
-            }).then(tank => this.models.set('tank', tank)),
-            loadModel(engine, {
+            }).then(data => this.meshes.set('tank', data)),
+            loadMeshAndTextures(engine, {
                 model: 'oak',
                 alphaTextures: ['blaetter'],
-            }).then(oak => this.models.set('oak', oak)),
+            }).then(data => this.meshes.set('oak', data)),
             SkyBox.loadSkyBox(engine, 'skybox.jpg').then(skyBox => this._skyBox = skyBox),
             engine.soundSystem.loadAudio('tank-shoot.wav', 'tank-shoot'),
             this.loadTexture('grass.jpg', { wrap: 'repeat' }),
@@ -115,8 +107,8 @@ export default class Game {
             meshInfo: this._groundMesh,
             textures: [this.textures.get('grass.jpg'), this.textures.get('stone-road.jpg')],
             depthmap: this.textures.get('terrain.jpg'),
-            repeat: [16, 16],
-            size:   [128, 128],
+            repeat:   [16, 16],
+            size:     [128, 128],
         });
 
         this.engine.addModel(plain);
@@ -135,30 +127,39 @@ export default class Game {
     }
 
     _addStaticGameObjects() {
-        const oak = this.models.get('oak');
+        const oakData = this.meshes.get('oak');
+        const oak = new Model(this.engine, oakData.mesh, oakData.textures);
         oak.setScale(0.1);
         oak.position.z = 10;
         this.engine.addModel(oak);
     }
 
     _logicTick(delta) {
-        if (this.engine.isObserverMode) {
-            return;
-        }
+        for (let tankState of this._worldState.tanks) {
+            let tank = this.tanksMap.get(tankState.id);
 
-        const _delta = delta * 0.0008;
+            if (!tank) {
+                const tankData = this.meshes.get('tank');
+                tank = new Model(this.engine, tankData.mesh.clone(), tankData.textures);
 
-        const needAngle  = this.camera.rotation.y - this.tank.rotation.y;
-        const deltaAngle = normalizeAngle(turret.rotation.y - needAngle);
-
-        if (deltaAngle < _delta || deltaAngle > PI2 - _delta) {
-            turret.rotation.y = needAngle
-        } else {
-            if (deltaAngle > Math.PI) {
-                turret.rotation.y += _delta;
-            } else {
-                turret.rotation.y -= _delta;
+                this.tanksMap.set(tankState.id, tank);
+                this.engine.addModel(tank);
             }
+
+            const pos = tankState.pos;
+
+            tank.position = { x: pos.x, y: tank.position.y, z: pos.y };
+            tank.rotation.y = tankState.dir;
+
+            if (tankState.id === this._myTankId && !this.engine.isObserverMode) {
+                this.camera.position.x = pos.x;
+                this.camera.position.y = 4;
+                this.camera.position.z = pos.y;
+            }
+
+            const turret = tank.getPart('Turret_2');
+
+            turret.rotation.y = tankState.turDir;
         }
     }
 
@@ -171,6 +172,9 @@ export default class Game {
                     this.start();
                 }
                 break;
+            case 'tank':
+                this._myTankId = data.id;
+                break;
             default:
                 console.log(`Unknown message [${type}]`);
         }
@@ -181,6 +185,35 @@ export default class Game {
             this.textures.set(fileName, texture);
 
             return texture;
+        });
+    }
+
+    _sendInput() {
+        const keyboard = this.engine.keyboard;
+
+        let direction = 0;
+        let acceleration = 0;
+
+        if (keyboard.keys.has('w')) {
+            acceleration += 1;
+        }
+
+        if (keyboard.keys.has('s')) {
+            acceleration -= 1;
+        }
+
+        if (keyboard.keys.has('a')) {
+            direction -= 1;
+        }
+
+        if (keyboard.keys.has('d')) {
+            direction = 1;
+        }
+
+        this.socket.send('input', {
+            direction,
+            acceleration,
+            viewDirection: this.camera.rotation.y,
         });
     }
 

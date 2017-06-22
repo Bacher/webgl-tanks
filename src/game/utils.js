@@ -9,7 +9,7 @@ export function parseSearchQuery() {
         for (let part of parts) {
             const [, name, value] = part.match(/^([^=]+)(?:=(.*?))?$/);
 
-            params[name] = value === null ? true : value;
+            params[name] = value == null ? true : value;
         }
     }
 

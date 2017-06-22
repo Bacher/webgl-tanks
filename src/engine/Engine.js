@@ -2,6 +2,7 @@ import { vec3, vec4, mat3, mat4 } from 'gl-matrix';
 import _ from 'lodash';
 import Shader from './Shader';
 import Model from './Model';
+import Mesh from './Mesh';
 import Texture from './Texture';
 import TextureWrapper from './TextureWrapper';
 import Camera from './Camera';
@@ -327,5 +328,27 @@ export function loadModel(engine, { model, alphaTextures }) {
         }
 
         return Promise.all(waits).then(() => new Model(engine, data, textures));
+    });
+}
+
+export function loadMeshAndTextures(engine, { model, alphaTextures }) {
+    return loadObj(model).then(data => {
+        const textures = {};
+        const waits = [];
+
+        for (let group of data.groups) {
+            const material       = group.material || group.id;
+            const isAlphaTexture = alphaTextures && alphaTextures.includes(material);
+            const extension      = isAlphaTexture ? 'png' : 'jpg';
+            const fileName       = `${model}__${material}.${extension}`;
+
+            waits.push(Texture.loadTexture(engine, fileName, { alpha: isAlphaTexture }).then(texture => {
+                textures[material] = texture;
+            }));
+        }
+
+        const mesh = new Mesh(engine, data);
+
+        return Promise.all(waits).then(() => ({ mesh, textures }));
     });
 }

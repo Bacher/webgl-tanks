@@ -1,5 +1,5 @@
 import Game from './Game';
 
-const game = new Game();
+window.game = new Game();
 
 game.init();

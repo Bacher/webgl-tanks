@@ -1,16 +1,11 @@
 import { vec3, mat4 } from 'gl-matrix';
-import Mesh from './Mesh';
 
 export default class Model {
 
-    constructor(engine, meshInfo, textures) {
+    constructor(engine, mesh, textures) {
         this.e = engine;
 
-        //this.shader = 'textured';
         this.shader = 'texturedPoly';
-
-        const bb = this.boundBox = meshInfo.boundBox;
-        this.boundSphere = meshInfo.boundSphere;
 
         this.position = {
             x: 0,
@@ -26,19 +21,6 @@ export default class Model {
 
         this.scale = [1, 1, 1];
 
-        const { min, max } = bb;
-
-        this._boundBoxPoints = [
-            vec3.fromValues(...min),
-            vec3.fromValues(min[0], min[1], max[2]),
-            vec3.fromValues(max[0], min[1], max[2]),
-            vec3.fromValues(max[0], min[1], min[2]),
-            vec3.fromValues(min[0], max[1], min[2]),
-            vec3.fromValues(min[0], max[1], max[2]),
-            vec3.fromValues(...max),
-            vec3.fromValues(max[0], max[1], min[2]),
-        ];
-
         this._tmpBoundBoxPoints = [
             vec3.create(),
             vec3.create(),
@@ -52,7 +34,7 @@ export default class Model {
 
         this._mPos = mat4.create();
 
-        this._mesh = new Mesh(engine, meshInfo);
+        this._mesh = mesh;
 
         this._textures = textures;
     }
@@ -166,7 +148,7 @@ export default class Model {
 
         for (let i = 0; i < 8; i++) {
             const tmp = this._tmpBoundBoxPoints[i];
-            vec3.transformMat4(tmp, this._boundBoxPoints[i], mFinal);
+            vec3.transformMat4(tmp, this._mesh.boundBoxPoints[i], mFinal);
 
             if (tmp[0] < 1) {
                 allXgt1 = false;
