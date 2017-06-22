@@ -41,11 +41,11 @@ void main(void) {
     vec2 uv = vec2(vUV[0] * repeat[0], vUV[1] * repeat[1]);
     vec4 color1 = texture2D(uSampler1, uv);
     vec4 color2 = texture2D(uSampler2, uv);
-    
+
     float mix = texture2D(uDepthSampler, vUV).g;
-    
+
     vec4 color = color1 * (1.0 - mix) + color2 * mix;
-    
+
     gl_FragColor = vec4(color.rgb * power, color.a);
 }
 `;

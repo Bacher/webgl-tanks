@@ -36,14 +36,14 @@ void main(void) {
     
     if (depthZ < vLight.z) {
         power = 0.9;
-        
+
         float depthZl = texture2D(uDepthMapSampler, vec2(vLight.x - 0.000488281, vLight.y)).r;
         float depthZr = texture2D(uDepthMapSampler, vec2(vLight.x + 0.000488281, vLight.y)).r;
         float depthZu = texture2D(uDepthMapSampler, vec2(vLight.x, vLight.y - 0.000488281)).r;
         float depthZd = texture2D(uDepthMapSampler, vec2(vLight.x, vLight.y + 0.000488281)).r;
-        
+
         float shade = 0.0;
-                
+
         if (depthZl < vLight.z) { shade += 1.0; power -= 0.06 * shade; }
         if (depthZr < vLight.z) { shade += 1.0; power -= 0.06 * shade; }
         if (depthZu < vLight.z) { shade += 1.0; power -= 0.06 * shade; }
@@ -53,11 +53,11 @@ void main(void) {
     vec2 uv = vec2(vUV[0] * repeat[0], vUV[1] * repeat[1]);
     vec4 color1 = texture2D(uSampler1, uv);
     vec4 color2 = texture2D(uSampler2, uv);
-    
+
     float mix = texture2D(uDepthSampler, vUV).g;
-    
+
     vec4 color = color1 * (1.0 - mix) + color2 * mix;
-    
+
     gl_FragColor = vec4(color.rgb * power, color.a);
 }
 `;

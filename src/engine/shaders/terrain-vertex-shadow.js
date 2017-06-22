@@ -20,7 +20,7 @@ void main(void) {
     } else {
         power = 1.0;
     }
-    
+
     vUV = vec2((1.0 + aPos[0]) * 0.5, (1.0 + aPos[2]) * 0.5);
     //gl_Position = umCamera * umModel * vec4(aPos[0], (texture2D(uDepthSampler, vUV).r - 0.5) * 50.0, aPos[2], 1.0);
     gl_Position = umCamera * umModel * vec4(aPos, 1.0);
@@ -42,11 +42,11 @@ void main(void) {
     vec2 uv = vec2(vUV[0] * repeat[0], vUV[1] * repeat[1]);
     vec4 color1 = texture2D(uSampler1, uv);
     vec4 color2 = texture2D(uSampler2, uv);
-    
+
     float mix = texture2D(uDepthSampler, vUV).g;
-    
+
     vec4 color = color1 * (1.0 - mix) + color2 * mix;
-    
+
     gl_FragColor = vec4(color.rgb * power, color.a);
 }
 `;
