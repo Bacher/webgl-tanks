@@ -1,0 +1,11 @@
+Sending array of matrices to shader (GLSL)
+https://www.gamedev.net/forums/topic/598690-sending-array-of-matrices-to-shader-glsl/
+
+GLSL Programming/Vector and Matrix Operations
+https://en.wikibooks.org/wiki/GLSL_Programming/Vector_and_Matrix_Operations
+
+Shadow Mapping
+http://www.opengl-tutorial.org/ru/intermediate-tutorials/tutorial-16-shadow-mapping/
+
+Textures
+https://ru.pinterest.com/imchangmin86/stone-floor/?lp=true
